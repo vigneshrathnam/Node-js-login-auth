@@ -5,13 +5,14 @@ var bcrypt = require('bcryptjs');
 const { forwardAuthenticated } = require('../config/auth');
 
 router.get("/register",forwardAuthenticated,(req,res)=>{
-                                                          res.render("register",{title: "Registration Page"});
+  res.locals.title="Registration Page"; 
+  res.render("register");
 
 });
 
 router.get("/login",forwardAuthenticated,(req,res)=>{
-
-        res.render("login",{title: "Login form "});
+  res.locals.title="Login form";
+  res.render("login");
 
 });
 
@@ -54,8 +55,8 @@ router.post("/register",(req,res)=>{
   db.findOne({email },(err, doc)=> {
 	  if(doc){
    errors.push({msg: "This Email Already registered"});
-  return res.render("register",{
-  title: "Registration Page",                       errors,                                           name,
+	  res.locals.title="Registration Page";
+  return res.render("register",{                      errors,                                           name,
   email,
   password,
   password2
@@ -102,6 +103,41 @@ router.get('/logout', (req, res) => {
 });
 
 
+router.get("/forgotpass",(req,res)=>{
+   res.locals.title="Forget Password";	
+   res.render("forgot");
+});
+
+router.post("/forgotpass",(req,res)=>{
+   const { email }=req.body;
+   let errors=[];
+   res.locals.title="Forget Password";
+   if(!email){
+	errors.push({ msg: "Email is Required" });
+   }
+  
+   if(!(/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(email))){
+        errors.push({msg: "The entered Email is not valid"});
+}
+
+   if(errors.length>0){
+   res.render("forgot",{ errors, email  });
+   }
+   else
+   {
+	db.findOne({ email },(err,user)=>{
+		if(err) throw err;
+		else if(!user){
+			req.flash("error_msg","This Email is Not Registered");
+			res.redirect("/forgotpass");
+		}
+		else{                                                         req.flash("success_msg","A confirmation message is sent to your mail");
+                        res.redirect("/forgotpass");
+                }
+
+	});
+   }
+});
 
 
 module.exports=router;
